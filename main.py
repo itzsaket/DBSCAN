@@ -96,18 +96,25 @@ def read_log():
     att_yaw = 0.0
     _check = False
     for row in csv_reader:
-
+        # print(row)
         if row[0] == 'GPS':
             lat = row[7]
             lng = row[8]
         elif row[0] == 'ATT':
                 att_yaw = float(row[-3])
-        elif row == start_point:
-            print("check true")
-            _check = True
-        elif row == end_point:
-            print("check false")
-            _check = False
+        # elif row == start_point:
+        #     print("check true")
+        #     _check = True
+        # elif row == end_point:
+        #     print("check false")
+        #     _check = False
+        elif row[0] == 'MSG':
+            if row[2] == ' Mission: 1 Takeoff':
+                print("check True")
+                _check = True
+            elif row[2] == ' Mission: 98 RTL':
+                print("check false")
+                _check = False
         elif row[0] == 'R21F' and _check:
 
             dis = row[-5]
@@ -153,7 +160,7 @@ database_x = [0] * database_size             # coordinate x list
 database_y = [0] * database_size             # coordinate y list
 database_cluster_ID = [0] * database_size    # id cluster
 database_verification = [0] * database_size  # data verification 0 - not verified 1 - verified
-distance_glitch = 0.001                     # distance between points to make a point valid
+distance_glitch = 1                     # distance between points to make a point valid
 x_coordinate = []                            # store valid x coordinate
 y_coordinate = []                            # store valid y coordinate
 ID_coordinate = []                           # coordinate cluster ID
@@ -165,8 +172,9 @@ dee = 0
 def get_distance(x1, y1, x2, y2):
     return math.sqrt(pow((x2-x1), 2) + pow((y2-y1), 2))
 def point_validit(x, y, index):
-    global database_x, database_y, database_verification, database_size, distance_glitch, x_coordinate, y_coordinate, true_object, id_taken, dee
+    global database_x, database_y, database_verification, database_size, x_coordinate, y_coordinate, true_object, id_taken, dee
     minimum_point = 0
+    distance_glitch = 2
     for i in range(0, database_size):
         if i == index:          # same index no need to check
             continue
@@ -180,79 +188,86 @@ def point_validit(x, y, index):
         coords_1 = (x, y)
         coords_2 = (database_x[i], database_y[i])
 
-        distance = geopy.distance.geodesic(coords_1, coords_2).km/1000
+        distance = geopy.distance.geodesic(coords_1, coords_2).m
+        # print(distance)
         if distance < distance_glitch:
+
+            minimum_point += 1
             # print("setting cluster")
-            if database_cluster_ID[i] == 0:
-                if database_cluster_ID[index] == 0:
-                    id_taken += 1
-                    print("using ID " + str(id_taken) + " "+ str(dee))
-                    database_cluster_ID[index] = id_taken
-                    database_cluster_ID[i] = database_cluster_ID[index]
-                    # backup_id = database_cluster_ID[index]
-                    # for j in range(len(database_cluster_ID)):
-                    #     if database_cluster_ID[j] == backup_id:
-                    #         database_cluster_ID[j] = backup_id
-                elif database_cluster_ID[index] != 0:
-                    database_cluster_ID[i] = database_cluster_ID[index]
+            # if database_cluster_ID[i] == 0:
+            #     if database_cluster_ID[index] == 0:
+            #         id_taken += 1
+            #         print("using ID " + str(id_taken) + " "+ str(dee))
+            #         database_cluster_ID[index] = id_taken
+            #         database_cluster_ID[i] = database_cluster_ID[index]
+            #         # backup_id = database_cluster_ID[index]
+            #         # for j in range(len(database_cluster_ID)):
+            #         #     if database_cluster_ID[j] == backup_id:
+            #         #         database_cluster_ID[j] = backup_id
+            #     elif database_cluster_ID[index] != 0:
+            #         database_cluster_ID[i] = database_cluster_ID[index]
             # else:
             #     backup_id = database_cluster_ID[index]
             #     for j in range(len(database_cluster_ID)):
             #         if database_cluster_ID[j] == backup_id:
             #             database_cluster_ID[j] = backup_id
 
-    # now verification of
-    for k in range(0, database_size):
-        if database_cluster_ID[k] == database_cluster_ID[index]:
-            minimum_point += 1
+    # # now verification of
+    # for k in range(0, database_size):
+    #     if database_cluster_ID[k] == database_cluster_ID[index]:
+    #         minimum_point += 1
             # print(minimum_point)
 
-
-    if minimum_point > 40 and database_verification[index] != 1:
-        for l in range(0, database_size):
-            if database_cluster_ID[l] == database_cluster_ID[index]:
-                if database_verification[l] != 1:
-                    database_verification[l] = 1
-        #             x_coordinate.append(database_x[l])
-        #             y_coordinate.append(database_y[l])
-        #             ID_coordinate.append(database_cluster_ID[index])
-        # x_coordinate.append(x)
-        # y_coordinate.append(y)
-        # print(database_cluster_ID[index])
+    if minimum_point > 20:
         database_verification[index] = 1
-        # ID_coordinate.append(database_cluster_ID[index])
-        # true_object += 1
+    # if minimum_point > 40 and database_verification[index] != 1:
+    #     for l in range(0, database_size):
+    #         if database_cluster_ID[l] == database_cluster_ID[index]:
+    #             if database_verification[l] != 1:
+    #                 database_verification[l] = 1
+    #     #             x_coordinate.append(database_x[l])
+    #     #             y_coordinate.append(database_y[l])
+    #     #             ID_coordinate.append(database_cluster_ID[index])
+    #     # x_coordinate.append(x)
+    #     # y_coordinate.append(y)
+    #     # print(database_cluster_ID[index])
+    #     database_verification[index] = 1
+    #     # ID_coordinate.append(database_cluster_ID[index])
+    #     # true_object += 1
 
+
+d = 0
     # print("checking cluster")
 def filter_thread():
-    global database_x, database_y, database_verification, database_size, Task_complete
-    d = 0
-    while(True):
-        # print("thread_working")
 
-        if Task_complete:
-            print("break")
-            break
-        sema.acquire()
-        # print(database_x)
-        # print(database_y)
-        # print(database_ID)
-        for i in range(0, database_size):
-            if database_x[i] == 0.0 and database_y[i] == 0.0:
-                print("ignoring")
-                continue
-            if database_verification[i] != 0:
-                # print("point is good")
-                continue
-            print("do " + str(d))
-            point_validit(database_x[i], database_y[i], i)
-        d += 1
+    global database_x, database_y, database_verification, database_size, Task_complete, d
 
-        sema.release()
-        time.sleep(0.001)
-    print("ID ")
-    print(ID_coordinate)
-lock1 = Semaphore(1)
+    # while (True):
+    #     # print("thread_working")
+    #
+    #     if Task_complete:
+    #         print("break")
+    #         break
+    #     sema.acquire()
+    #     # print(database_x)
+    #     # print(database_y)
+    #     # print(database_ID)
+    for i in range(0, database_size):
+        if database_x[i] == 0.0 and database_y[i] == 0.0:
+            # print("ignoring")
+            continue
+        if database_verification[i] != 0:
+            # print("point is good")
+            continue
+        # print("do " + str(d))
+        point_validit(database_x[i], database_y[i], i)
+    d += 1
+
+        # sema.release()
+        # time.sleep(0.001)
+    # print("ID ")
+    # print(ID_coordinate)
+# lock1 = Semaphore(1)
 def plotting_thread():
     global database_x, database_y, database_verification, database_size, Task_complete, true_object, dee
     # opening the CSV file
@@ -260,8 +275,14 @@ def plotting_thread():
     csv_reader = reader(file_read)
     counter = 0
     count_append = 0
+    count = 0
     for i in csv_reader:
         dee = i
+        count += 1
+        if count >= 50:
+            filter_thread()
+            count = 0
+
         if counter == 0:
             counter += 1
             continue
@@ -279,6 +300,7 @@ def plotting_thread():
         database_x[count_append] = x
         database_y[count_append] = y
         if database_verification[count_append] != 0:
+            print("adding")
             database_verification[count_append] = 0
             database_cluster_ID[count_append] = 0
             true_object -= 1
@@ -311,15 +333,15 @@ def plotting_thread():
 
 
 if __name__=="__main__":
-    t1 = threading.Thread(target=filter_thread, name="t1")
-    t2 = threading.Thread(target=plotting_thread, name="t2")
+    # t1 = threading.Thread(target=filter_thread, name="t1")
+    # t2 = threading.Thread(target=plotting_thread, name="t2")
     # t3 = threading.Thread(target=plot_graph_thread, name="t3")
     # while(True):
     init_fs()
     read_log()
 
-    t1.start()
-    t2.start()
+    # t1.start()
+    # t2.start()
     print("plotting")
     # global x_coordinate, y_coordinate, true_object, Task_complete
     camera = Camera(plt.figure())
@@ -328,10 +350,11 @@ if __name__=="__main__":
     print(len(ID_coordinate))
     print(ID_coordinate)
     bo = False
-    while(True):
-        if not Task_complete:
-            continue
-        break
+    plotting_thread()
+    # while(True):
+    #     if not Task_complete:
+    #         continue
+    #     break
 
     print(x_coordinate)
     dic = {'lat': x_coordinate, 'lon': y_coordinate, 'cluster number': cluster_coordinate}
