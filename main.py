@@ -108,13 +108,23 @@ def read_log():
         # elif row == end_point:
         #     print("check false")
         #     _check = False
-        elif row[0] == 'MSG':
-            if row[2] == ' Mission: 1 Takeoff':
-                print("check True")
-                _check = True
-            elif row[2] == ' Mission: 98 RTL':
-                print("check false")
-                _check = False
+        elif row[1] == ' 475845195':
+            # if row[2] == ' Mission: 1 Takeoff':
+            # if row[2] == ' 10':
+            print("check True")
+            _check = True
+        # elif row[2] == ' Mission: 51 WP' and row[1] == ' 495887830':
+        # elif row[2] == ' Mission: 98 RTL':
+        elif row[1] == " 483644272":
+            print("check false")
+            _check = False
+        # elif row[0] == 'MSG':
+        #     if row[2] == ' Mission: 1 Takeoff':
+        #         print("check True")
+        #         _check = True
+        #     elif row[2] == ' Mission: 98 RTL':
+        #         print("check false")
+        #         _check = False
         elif row[0] == 'R21F' and _check:
 
             dis = row[-5]
@@ -174,7 +184,7 @@ def get_distance(x1, y1, x2, y2):
 def point_validit(x, y, index):
     global database_x, database_y, database_verification, database_size, x_coordinate, y_coordinate, true_object, id_taken, dee
     minimum_point = 0
-    distance_glitch = 2
+    distance_glitch = 1
     for i in range(0, database_size):
         if i == index:          # same index no need to check
             continue
@@ -191,50 +201,37 @@ def point_validit(x, y, index):
         distance = geopy.distance.geodesic(coords_1, coords_2).m
         # print(distance)
         if distance < distance_glitch:
+            if database_cluster_ID[index] == 0:
+                id_taken += 1
+                database_cluster_ID[index] = id_taken
+                if database_cluster_ID[i] != 0:
+                    backup_id = database_cluster_ID[i]
+                    for j in range(database_size):
+                        if database_cluster_ID[i] == backup_id:
+                            database_cluster_ID[i] = database_cluster_ID[index]
+                else:
+                    database_cluster_ID[i] = database_cluster_ID[index]
+            elif database_cluster_ID[index] != 0:
+                backup_id1 = database_cluster_ID[index]
+                if database_cluster_ID[i] != 0:
+                    backup_id = database_cluster_ID[i]
+                    for j in range(database_size):
+                        if database_cluster_ID[i] == backup_id:
+                            database_cluster_ID[i] = database_cluster_ID[index]
+                else:
+                    database_cluster_ID[i] = database_cluster_ID[index]
 
+    # now verification of
+    for k in range(database_size):
+        if database_cluster_ID[k] == database_cluster_ID[index]:
             minimum_point += 1
-            # print("setting cluster")
-            # if database_cluster_ID[i] == 0:
-            #     if database_cluster_ID[index] == 0:
-            #         id_taken += 1
-            #         print("using ID " + str(id_taken) + " "+ str(dee))
-            #         database_cluster_ID[index] = id_taken
-            #         database_cluster_ID[i] = database_cluster_ID[index]
-            #         # backup_id = database_cluster_ID[index]
-            #         # for j in range(len(database_cluster_ID)):
-            #         #     if database_cluster_ID[j] == backup_id:
-            #         #         database_cluster_ID[j] = backup_id
-            #     elif database_cluster_ID[index] != 0:
-            #         database_cluster_ID[i] = database_cluster_ID[index]
-            # else:
-            #     backup_id = database_cluster_ID[index]
-            #     for j in range(len(database_cluster_ID)):
-            #         if database_cluster_ID[j] == backup_id:
-            #             database_cluster_ID[j] = backup_id
-
-    # # now verification of
-    # for k in range(0, database_size):
-    #     if database_cluster_ID[k] == database_cluster_ID[index]:
-    #         minimum_point += 1
-            # print(minimum_point)
+            print('minimum point ' + str(minimum_point))
 
     if minimum_point > 20:
-        database_verification[index] = 1
-    # if minimum_point > 40 and database_verification[index] != 1:
-    #     for l in range(0, database_size):
-    #         if database_cluster_ID[l] == database_cluster_ID[index]:
-    #             if database_verification[l] != 1:
-    #                 database_verification[l] = 1
-    #     #             x_coordinate.append(database_x[l])
-    #     #             y_coordinate.append(database_y[l])
-    #     #             ID_coordinate.append(database_cluster_ID[index])
-    #     # x_coordinate.append(x)
-    #     # y_coordinate.append(y)
-    #     # print(database_cluster_ID[index])
-    #     database_verification[index] = 1
-    #     # ID_coordinate.append(database_cluster_ID[index])
-    #     # true_object += 1
-
+        for l in range(database_size):
+            if database_cluster_ID[l] == database_cluster_ID[index]:
+                print('verifing')
+                database_verification[l] = 1
 
 d = 0
     # print("checking cluster")
